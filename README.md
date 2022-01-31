@@ -38,3 +38,21 @@
   };
 }
 ```
+
+## Usages
+
+```nix
+{ config, ... }:
+
+{
+  secrets.identityPaths = [ "${config.home.homeDirectory}/.ssh/id_ed25519" ];
+
+  secrets.file = {
+    "foo/bar.txt" = {
+      path = "foo-bar-txt";
+      source = ./files/bar.txt.age;
+      symlinks = [ "${config.xdg.configHome}/foo/bar.txt" ];
+    };
+  };
+}
+```
