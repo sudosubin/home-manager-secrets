@@ -97,6 +97,7 @@ in {
     identityPaths = mkOption {
       type = types.listOf types.path;
       default = [ ];
+      example = "[ \"\${config.home.homeDirectory}/.ssh/id_ed25519\" ]";
       description = "Path of ssh keys to use as identities in age decryption";
     };
 

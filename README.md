@@ -41,6 +41,8 @@
 
 ## Usages
 
+There are [more options](./docs/OPTIONS.md) available.
+
 ```nix
 { config, ... }:
 
