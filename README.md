@@ -58,3 +58,7 @@ There are [more options](./docs/OPTIONS.md) available.
   };
 }
 ```
+
+## Credits
+
+This project was written with a lot of influence from [agenix](https://github.com/ryantm/agenix), [agenix#58](https://github.com/ryantm/agenix/pull/58), [homeage](https://github.com/jordanisaacs/homeage).
