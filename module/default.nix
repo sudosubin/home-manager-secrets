@@ -33,6 +33,13 @@ let
 
   secretsScript = builtins.concatStringsSep "\n" (attrsets.mapAttrsToList decryptSecret cfg.file);
 
+  secretsScriptBin = pkgs.writeShellScriptBin "home-manager-secrets-decrypt" ''
+    set -euo pipefail
+    DRY_RUN_CMD=
+    VERBOSE_ARG=
+    ${secretsScript}
+  '';
+
   secretType = types.submodule ({ config, ... }: {
     options = {
       path = mkOption {
@@ -106,6 +113,21 @@ in {
       message = "config.secrets.identityPaths must be set.";
     }];
 
-    home.activation.home-manager-secrets = hm.dag.entryAfter [ "writeBoundary" ] secretsScript;
+    # Disabled for failure
+    # home.activation.home-manager-secrets = hm.dag.entryAfter [ "writeBoundary" ] secretsScript;
+
+    systemd.user.services."home-manager-secrets-${config.home.username}" = {
+      Unit = {
+        Description = "Decrypt home-manager-secrets files";
+        PartOf = [ "default.target" ];
+      };
+      Service = {
+        ExecStart = "${secretsScriptBin}/bin/home-manager-secrets-decrypt";
+        Environment = "PATH=${makeBinPath [ pkgs.coreutils ]}";
+      };
+      Install = {
+        WantedBy = [ "default.target" ];
+      };
+    };
   };
 }
