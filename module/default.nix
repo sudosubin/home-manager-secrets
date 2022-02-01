@@ -6,18 +6,22 @@ let
 
   identities = builtins.concatStringsSep " " (map (path: "-i ${path}") cfg.identityPaths);
 
-  createSymlinks = secret: builtins.concatStringsSep "\n" (map (symlink:
-    let
-      source = "${cfg.mount}/${secret.path}";
-    in ''
-      mkdir -p $(dirname ${symlink})
-      ln -sf ${source} ${symlink}
-    '') secret.symlinks);
+  createSymlinks = secret: builtins.concatStringsSep "\n" (map
+    (symlink:
+      let
+        source = "${cfg.mount}/${secret.path}";
+      in
+      ''
+        mkdir -p $(dirname ${symlink})
+        ln -sf ${source} ${symlink}
+      '')
+    secret.symlinks);
 
   decryptSecret = name: secret:
     let
       destination = "${cfg.mount}/${secret.path}";
-    in ''
+    in
+    ''
       echo "Decrypting secret ${secret.source} to ${destination}"
       TMP_FILE="${destination}.tmp"
       $DRY_RUN_CMD mkdir $VERBOSE_ARG -p $(dirname ${destination})
@@ -79,7 +83,8 @@ let
     };
   });
 
-in {
+in
+{
   options.secrets = {
     ageBin = mkOption {
       type = types.str;
