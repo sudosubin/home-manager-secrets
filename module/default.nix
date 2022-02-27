@@ -2,6 +2,8 @@
 with lib;
 
 let
+  inherit (pkgs) stdenv;
+
   cfg = config.secrets;
 
   identities = builtins.concatStringsSep " " (map (path: "-i ${path}") cfg.identityPaths);
@@ -119,20 +121,25 @@ in
       message = "config.secrets.identityPaths must be set.";
     }];
 
-    # Disabled for failure
-    # home.activation.home-manager-secrets = hm.dag.entryAfter [ "writeBoundary" ] secretsScript;
+    # Enabled for darwin
+    home.activation = lib.mkIf stdenv.isDarwin {
+      homeManagerSecrets = hm.dag.entryAfter [ "writeBoundary" ] secretsScript;
+    };
 
-    systemd.user.services."home-manager-secrets-${config.home.username}" = {
-      Unit = {
-        Description = "Decrypt home-manager-secrets files";
-        PartOf = [ "default.target" ];
-      };
-      Service = {
-        ExecStart = "${secretsScriptBin}/bin/home-manager-secrets-decrypt";
-        Environment = "PATH=${makeBinPath [ pkgs.coreutils ]}";
-      };
-      Install = {
-        WantedBy = [ "default.target" ];
+    # Enabled for linux
+    systemd.user.services = lib.mkIf stdenv.isLinux {
+      "home-manager-secrets" = {
+        Unit = {
+          Description = "Decrypt home-manager-secrets files";
+          PartOf = [ "default.target" ];
+        };
+        Service = {
+          ExecStart = "${secretsScriptBin}/bin/home-manager-secrets-decrypt";
+          Environment = "PATH=${makeBinPath [ pkgs.coreutils ]}";
+        };
+        Install = {
+          WantedBy = [ "default.target" ];
+        };
       };
     };
   };
