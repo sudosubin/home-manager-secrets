@@ -20,6 +20,10 @@
   outputs = { self, nixpkgs, flake-utils, pre-commit-hooks, ... }: {
     homeManagerModules.home-manager-secrets = import ./module;
   } // flake-utils.lib.eachDefaultSystem (system:
+    let
+      pkgs = nixpkgs.legacyPackages.${system};
+
+    in
     {
       checks = {
         pre-commit-check = pre-commit-hooks.lib.${system}.run {
@@ -29,7 +33,8 @@
           };
         };
       };
-      devShell = nixpkgs.legacyPackages.${system}.mkShell {
+      devShell = pkgs.mkShell {
+        buildInputs = with pkgs; [ pre-commit ];
         inherit (self.checks.${system}.pre-commit-check) shellHook;
       };
     }
