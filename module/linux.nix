@@ -2,6 +2,8 @@
 { script }:
 
 let
+  cfg = config.secrets;
+
   scriptBin = pkgs.writeShellScriptBin "home-manager-secrets-script" ''
     set -euo pipefail
     DRY_RUN_CMD=
@@ -26,7 +28,7 @@ in
     };
   };
 
-  home.activation = {
+  home.activation = lib.mkIf cfg.enableForceReload {
     homeManagerSecrets = lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
       (
         export XDG_RUNTIME_DIR=''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}

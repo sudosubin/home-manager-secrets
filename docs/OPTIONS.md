@@ -25,6 +25,13 @@
 - description: Path of ssh keys to use as identities in age decryption
 
 
+**`secrets.enableForceReload`**
+
+- type: `types.bool`
+- default: `false`
+- description: For linux, force reload systemd service on home-manager activation
+
+
 **`secrets.file`**
 
 - type: `types.attrsOf secretType`
