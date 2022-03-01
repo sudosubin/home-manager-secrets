@@ -25,4 +25,16 @@ in
       };
     };
   };
+
+  home.activation = {
+    homeManagerSecrets = lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
+      (
+        export XDG_RUNTIME_DIR=''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+
+        if systemctl --user list-units --full --no-legend -all | grep "home-manager-secrets.service"; then
+          systemctl --user restart home-manager-secrets.service
+        fi
+      )
+    '';
+  };
 }
