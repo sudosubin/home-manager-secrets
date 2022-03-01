@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, ... }@args:
 with lib;
 
 let
@@ -38,13 +38,6 @@ let
     '';
 
   secretsScript = builtins.concatStringsSep "\n" (attrsets.mapAttrsToList decryptSecret cfg.file);
-
-  secretsScriptBin = pkgs.writeShellScriptBin "home-manager-secrets-decrypt" ''
-    set -euo pipefail
-    DRY_RUN_CMD=
-    VERBOSE_ARG=
-    ${secretsScript}
-  '';
 
   secretType = types.submodule ({ config, ... }: {
     options = {
@@ -108,6 +101,12 @@ in
       description = "Path of ssh keys to use as identities in age decryption";
     };
 
+    enableForceReload = mkOption {
+      type = types.bool;
+      default = false;
+      description = "For linux, force reload systemd service on home-manager activation";
+    };
+
     file = mkOption {
       type = types.attrsOf secretType;
       default = { };
@@ -115,32 +114,15 @@ in
     };
   };
 
-  config = mkIf (cfg.file != { }) {
-    assertions = [{
-      assertion = cfg.identityPaths != [ ];
-      message = "config.secrets.identityPaths must be set.";
-    }];
+  config = mkIf (cfg.file != { }) (mkMerge [
+    {
+      assertions = [{
+        assertion = cfg.identityPaths != [ ];
+        message = "config.secrets.identityPaths must be set.";
+      }];
+    }
 
-    # Enabled for darwin
-    home.activation = lib.mkIf stdenv.isDarwin {
-      homeManagerSecrets = hm.dag.entryAfter [ "writeBoundary" ] secretsScript;
-    };
-
-    # Enabled for linux
-    systemd.user.services = lib.mkIf stdenv.isLinux {
-      "home-manager-secrets" = {
-        Unit = {
-          Description = "Decrypt home-manager-secrets files";
-          PartOf = [ "default.target" ];
-        };
-        Service = {
-          ExecStart = "${secretsScriptBin}/bin/home-manager-secrets-decrypt";
-          Environment = "PATH=${makeBinPath [ pkgs.coreutils ]}";
-        };
-        Install = {
-          WantedBy = [ "default.target" ];
-        };
-      };
-    };
-  };
+    (mkIf (stdenv.isDarwin) (import ./darwin.nix args { script = secretsScript; }))
+    (mkIf (stdenv.isLinux) (import ./linux.nix args { script = secretsScript; }))
+  ]);
 }
