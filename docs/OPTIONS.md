@@ -29,7 +29,7 @@
 
 - type: `types.bool`
 - default: `false`
-- description: For linux, force reload systemd service on home-manager activation
+- description: Enable force reload on home-manager activation
 
 
 **`secrets.file`**
