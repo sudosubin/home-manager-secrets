@@ -31,7 +31,7 @@ in
       (
         agent="gui/$UID/${config.launchd.agents.home-manager-secrets.config.Label}"
 
-        if launchctl print "$agent"; then
+        if launchctl print "$agent" >/dev/null 2>&1; then
           launchctl kickstart -k "$agent"
         fi
       )
