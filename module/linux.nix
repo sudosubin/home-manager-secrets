@@ -4,13 +4,6 @@
 let
   cfg = config.secrets;
 
-  scriptBin = pkgs.writeShellScriptBin "home-manager-secrets-script" ''
-    set -euo pipefail
-    DRY_RUN_CMD=
-    VERBOSE_ARG=
-    ${script}
-  '';
-
 in
 {
   systemd.user.services = {
@@ -22,7 +15,7 @@ in
         WantedBy = [ "default.target" ];
       };
       Service = {
-        ExecStart = "${scriptBin}/bin/home-manager-secrets-script";
+        ExecStart = "${script}/bin/home-manager-secrets-decrypt";
         Environment = "PATH=${lib.makeBinPath [ pkgs.coreutils ]}";
       };
     };

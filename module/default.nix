@@ -26,18 +26,20 @@ let
     ''
       echo "Decrypting secret ${secret.source} to ${destination}"
       TMP_FILE="${destination}.tmp"
-      $DRY_RUN_CMD mkdir $VERBOSE_ARG -p $(dirname ${destination})
+      mkdir -p $(dirname ${destination})
       (
-        $DRY_RUN_CMD umask u=r,g=,o=
-        $DRY_RUN_CMD ${cfg.ageBin} --decrypt ${identities} -o "$TMP_FILE" "${secret.source}"
+        umask u=r,g=,o=
+        ${cfg.ageBin} --decrypt ${identities} -o "$TMP_FILE" "${secret.source}"
       )
-      $DRY_RUN_CMD chmod $VERBOSE_ARG ${secret.mode} "$TMP_FILE"
-      $DRY_RUN_CMD chown $VERBOSE_ARG ${secret.owner}:${secret.group} "$TMP_FILE"
-      $DRY_RUN_CMD mv $VERBOSE_ARG -f "$TMP_FILE" "${destination}"
+      chmod ${secret.mode} "$TMP_FILE"
+      chown ${secret.owner}:${secret.group} "$TMP_FILE"
+      mv -f "$TMP_FILE" "${destination}"
       ${createSymlinks secret}
     '';
 
-  secretsScript = builtins.concatStringsSep "\n" (attrsets.mapAttrsToList decryptSecret cfg.file);
+  secretsScript = pkgs.writeShellScriptBin "home-manager-secrets-decrypt" ''
+    ${builtins.concatStringsSep "\n" (attrsets.mapAttrsToList decryptSecret cfg.file)}
+  '';
 
   secretType = types.submodule ({ config, ... }: {
     options = {
@@ -104,7 +106,7 @@ in
     enableForceReload = mkOption {
       type = types.bool;
       default = false;
-      description = "For linux, force reload systemd service on home-manager activation";
+      description = "Enable force reload on home-manager activation";
     };
 
     file = mkOption {
