@@ -4,19 +4,12 @@
 let
   cfg = config.secrets;
 
-  scriptBin = pkgs.writeShellScriptBin "home-manager-secrets-script" ''
-    set -euo pipefail
-    DRY_RUN_CMD=
-    VERBOSE_ARG=
-    ${script}
-  '';
-
 in
 {
   launchd.agents.home-manager-secrets = {
     enable = true;
     config = {
-      ProgramArguments = [ "${scriptBin}/bin/home-manager-secrets-script" ];
+      ProgramArguments = [ "${script}/bin/home-manager-secrets-decrypt" ];
       RunAtLoad = true;
       EnvironmentVariables = {
         PATH = "${lib.makeBinPath [ pkgs.coreutils ]}";
