@@ -14,8 +14,8 @@ let
         source = "${cfg.mount}/${secret.path}";
       in
       ''
-        mkdir -p $(dirname ${symlink})
-        ln -sf ${source} ${symlink}
+        mkdir -p "$(dirname "${symlink}")"
+        ln -sf "${source}" "${symlink}"
       '')
     secret.symlinks);
 
