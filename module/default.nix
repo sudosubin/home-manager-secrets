@@ -2,7 +2,7 @@
 with lib;
 
 let
-  inherit (pkgs) stdenv;
+  inherit (pkgs.stdenvNoCC.hostPlatform) isDarwin isLinux;
 
   cfg = config.secrets;
 
@@ -124,7 +124,7 @@ in
       }];
     }
 
-    (mkIf (stdenv.isDarwin) (import ./darwin.nix args { script = secretsScript; }))
-    (mkIf (stdenv.isLinux) (import ./linux.nix args { script = secretsScript; }))
+    (mkIf isDarwin (import ./darwin.nix args { script = secretsScript; }))
+    (mkIf isLinux (import ./linux.nix args { script = secretsScript; }))
   ]);
 }
