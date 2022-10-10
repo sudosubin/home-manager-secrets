@@ -35,6 +35,12 @@ let
       chown ${secret.owner}:${secret.group} "$TMP_FILE"
       mv -f "$TMP_FILE" "${destination}"
       ${createSymlinks secret}
+    '' + lib.optionalString (secret.onActivate != null) ''
+      echo "Activating secret ${destination}"
+      (
+        destination=${destination}
+        ${secret.onActivate}
+      )
     '';
 
   secretsScript = pkgs.writeShellScriptBin "home-manager-secrets-decrypt" ''
@@ -76,6 +82,12 @@ let
         type = types.listOf types.str;
         default = [ ];
         description = "Paths to create symbolic link";
+      };
+
+      onActivate = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Script to run on home-manager activation";
       };
     };
   });

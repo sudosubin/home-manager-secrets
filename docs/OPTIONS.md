@@ -84,3 +84,10 @@
 - type: `types.listOf types.str`
 - default: `[ ]`
 - description: Paths to create symbolic link
+
+
+**`secrets.file.<name>.onActivate`**
+
+- type: `types.nullOr types.str`
+- default: `null`
+- description: Script to run on home-manager activation
