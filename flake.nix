@@ -10,14 +10,14 @@
       url = "github:numtide/flake-utils";
     };
 
-    pre-commit-hooks = {
-      url = "github:cachix/pre-commit-hooks.nix";
+    lefthook = {
+      url = "github:sudosubin/lefthook.nix";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, pre-commit-hooks, ... }: {
+  outputs = { self, nixpkgs, flake-utils, lefthook, ... }: {
     homeManagerModules.home-manager-secrets = import ./module;
   } // flake-utils.lib.eachDefaultSystem (system:
     let
@@ -26,16 +26,18 @@
     in
     {
       checks = {
-        pre-commit-check = pre-commit-hooks.lib.${system}.run {
+        lefthook-check = lefthook.lib.${system}.run {
           src = ./.;
-          hooks = {
-            nixpkgs-fmt.enable = true;
+          config = {
+            pre-commit.commands = {
+              nixpkgs-fmt.run = "${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt {staged_files}";
+            };
           };
         };
       };
-      devShell = pkgs.mkShell {
-        buildInputs = with pkgs; [ pre-commit ];
-        inherit (self.checks.${system}.pre-commit-check) shellHook;
+
+      devShell = nixpkgs.legacyPackages.${system}.mkShell {
+        inherit (self.checks.${system}.lefthook-check) shellHook;
       };
     }
   );
