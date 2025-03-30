@@ -8,9 +8,7 @@
 # flake.nix
 {
   inputs = {
-    nixpkgs = {
-      url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    };
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
 
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -23,7 +21,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, home-manager-secrets, ...}: {
+  outputs = { self, nixpkgs, home-manager, home-manager-secrets }: {
     homeConfigurations = {
       jdoe = home-manager.lib.homeManagerConfiguration {
         system = "x86_64-linux";

@@ -1,47 +1,42 @@
 {
-  description = "Secrets management for home-manager";
+  description = "home-manager-secrets";
 
   inputs = {
-    nixpkgs = {
-      url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    };
-
-    flake-utils = {
-      url = "github:numtide/flake-utils";
-    };
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
 
     lefthook = {
       url = "github:sudosubin/lefthook.nix";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, lefthook, ... }: {
-    homeManagerModules.home-manager-secrets = import ./module;
-  } // flake-utils.lib.eachDefaultSystem (system:
+  outputs = { self, nixpkgs, lefthook }:
     let
-      pkgs = nixpkgs.legacyPackages.${system};
+      inherit (nixpkgs.lib) genAttrs platforms;
+      forAllSystems = f: genAttrs platforms.unix (system: f (import nixpkgs { inherit system; }));
 
     in
     {
-      checks = {
-        lefthook-check = lefthook.lib.${system}.run {
+      homeManagerModules.home-manager-secrets = import ./module;
+
+      checks = forAllSystems (pkgs: {
+        lefthook-check = lefthook.lib.${pkgs.system}.run {
           src = ./.;
           config = {
             pre-commit.commands = {
               nixpkgs-fmt = {
-                run = "${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt {staged_files}";
+                run = "${pkgs.lib.getExe pkgs.nixpkgs-fmt} {staged_files}";
                 glob = "*.nix";
               };
             };
           };
         };
-      };
+      });
 
-      devShell = nixpkgs.legacyPackages.${system}.mkShell {
-        inherit (self.checks.${system}.lefthook-check) shellHook;
-      };
-    }
-  );
+      devShells = forAllSystems (pkgs: {
+        default = pkgs.mkShell {
+          inherit (self.checks.${pkgs.system}.lefthook-check) shellHook;
+        };
+      });
+    };
 }
