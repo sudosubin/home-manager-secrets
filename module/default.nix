@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }@args:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}@args:
 with lib;
 
 let
@@ -8,18 +13,23 @@ let
 
   identities = builtins.concatStringsSep " " (map (path: "-i ${path}") cfg.identityPaths);
 
-  createSymlinks = secret: builtins.concatStringsSep "\n" (map
-    (symlink:
-      let
-        source = "${cfg.mount}/${secret.path}";
-      in
-      ''
-        mkdir -p "$(dirname "${symlink}")"
-        ln -sf "${source}" "${symlink}"
-      '')
-    secret.symlinks);
+  createSymlinks =
+    secret:
+    builtins.concatStringsSep "\n" (
+      map (
+        symlink:
+        let
+          source = "${cfg.mount}/${secret.path}";
+        in
+        ''
+          mkdir -p "$(dirname "${symlink}")"
+          ln -sf "${source}" "${symlink}"
+        ''
+      ) secret.symlinks
+    );
 
-  decryptSecret = name: secret:
+  decryptSecret =
+    name: secret:
     let
       destination = "${cfg.mount}/${secret.path}";
     in
@@ -35,7 +45,8 @@ let
       chown ${secret.owner}:${secret.group} "$TMP_FILE"
       mv -f "$TMP_FILE" "${destination}"
       ${createSymlinks secret}
-    '' + lib.optionalString (secret.onActivate != null) ''
+    ''
+    + lib.optionalString (secret.onActivate != null) ''
       echo "Activating secret ${destination}"
       (
         destination=${destination}
@@ -47,50 +58,53 @@ let
     ${builtins.concatStringsSep "\n" (attrsets.mapAttrsToList decryptSecret cfg.file)}
   '';
 
-  secretType = types.submodule ({ config, ... }: {
-    options = {
-      path = mkOption {
-        type = types.str;
-        default = "${config._module.args.name}";
-        description = "Path to store decrypted secret file";
-      };
+  secretType = types.submodule (
+    { config, ... }:
+    {
+      options = {
+        path = mkOption {
+          type = types.str;
+          default = "${config._module.args.name}";
+          description = "Path to store decrypted secret file";
+        };
 
-      source = mkOption {
-        type = types.path;
-        description = "Path to the encrypted age file";
-      };
+        source = mkOption {
+          type = types.path;
+          description = "Path to the encrypted age file";
+        };
 
-      mode = mkOption {
-        type = types.str;
-        default = "0400";
-        description = "Permission of the decrypted secret file";
-      };
+        mode = mkOption {
+          type = types.str;
+          default = "0400";
+          description = "Permission of the decrypted secret file";
+        };
 
-      owner = mkOption {
-        type = types.str;
-        default = "$UID";
-        description = "User of the decrypted secret file";
-      };
+        owner = mkOption {
+          type = types.str;
+          default = "$UID";
+          description = "User of the decrypted secret file";
+        };
 
-      group = mkOption {
-        type = types.str;
-        default = "$(id -g)";
-        description = "Group of the decrypted secret file";
-      };
+        group = mkOption {
+          type = types.str;
+          default = "$(id -g)";
+          description = "Group of the decrypted secret file";
+        };
 
-      symlinks = mkOption {
-        type = types.listOf types.str;
-        default = [ ];
-        description = "Paths to create symbolic link";
-      };
+        symlinks = mkOption {
+          type = types.listOf types.str;
+          default = [ ];
+          description = "Paths to create symbolic link";
+        };
 
-      onActivate = mkOption {
-        type = types.nullOr types.str;
-        default = null;
-        description = "Script to run on home-manager activation";
+        onActivate = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = "Script to run on home-manager activation";
+        };
       };
-    };
-  });
+    }
+  );
 
 in
 {
@@ -130,10 +144,12 @@ in
 
   config = mkIf (cfg.file != { }) (mkMerge [
     {
-      assertions = [{
-        assertion = cfg.identityPaths != [ ];
-        message = "config.secrets.identityPaths must be set.";
-      }];
+      assertions = [
+        {
+          assertion = cfg.identityPaths != [ ];
+          message = "config.secrets.identityPaths must be set.";
+        }
+      ];
     }
 
     (mkIf isDarwin (import ./darwin.nix args { script = secretsScript; }))
